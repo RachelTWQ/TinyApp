@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/RachelTWQ/TinyApp/issues"
   },
-  "homepage": "https://github.com/RachelTWQ/TinyApp#readme"
+  "homepage": "https://github.com/RachelTWQ/TinyApp#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
 }
