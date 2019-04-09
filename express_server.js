@@ -12,13 +12,19 @@ var urlDatabase = {
 app.get('/', (request, response) => {
     response.send('Hello');
 });
+app.get('/urls', (request, response) => {
+    let templateVars = {urls: urlDatabase};
+    response.render('urls_index', templateVars);
+});
 
 app.get('/urls.json', (request, response) => {
     response.json(urlDatabase);
 });
 
 app.get('/hello', (request, response) => {
-    response.send('<html><body>Hello <b>World</b></body></html>\n');
+    // response.send('<html><body>Hello <b>World</b></body></html>\n');
+    let templateVars = {greeting: 'Hello World!'};
+    response.render('hello_world', templateVars);
 });
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}!`);
