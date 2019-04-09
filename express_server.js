@@ -47,3 +47,15 @@ app.get('/hello', (request, response) => {
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}!`);
 });
+
+function generateRandomString(){
+    // return Math.floor((1 + Math.random()) * 0xfffff).toString(16);
+    let option = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890qwertyuioplkjhgfdsazxcvbnm';
+    let randomString = '';
+    for (let i = 0; i < 6; i++){
+        randomString += option[Math.ceil(Math.random() * 62)];
+    }
+    return randomString;
+}
+
+generateRandomString();
