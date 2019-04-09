@@ -9,9 +9,9 @@
   <title>TinyApp</title>
 </head>
 <body style="font-size:20px; padding:50px;">
-    <!-- Add EJS code here -->
-    <h1>TinyApp</h1>
-    <a href = 'www.google.com'>Create New TinyURL</a>
+    <!-- EJS code here -->
+    <% include ./partials/_header %>
+    <a href = '#'>Create New TinyURL</a>
     <h3>My URLs</h3>
     <ul>
         <% for (let url in urls) { %>
