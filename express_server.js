@@ -24,6 +24,12 @@ app.get('/urls', (request, response) => {
     response.render('urls_index', templateVars);
 });
 
+app.post('/login', (request, response) => {
+    let username = request.body;
+    response.cookie("username", username["username"]);
+    response.redirect('/urls');
+});
+
 app.get('/urls/new', (request, response) => {
     response.render('urls_new');
 });
