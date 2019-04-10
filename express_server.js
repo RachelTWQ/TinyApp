@@ -32,6 +32,11 @@ app.post('/login', (request, response) => {
     response.redirect('/urls');
 });
 
+app.post('/logout', (request, response) => {
+    response.clearCookie("username");
+    response.redirect('/urls');
+});
+
 app.get('/urls/new', (request, response) => {
     response.render('urls_new');
 });
