@@ -7,7 +7,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.set('view engine', 'ejs');
 
-let urlDatabase = {
+const urlDatabase = {
     'b2xVn2': 'http://www.lighthouselabs.ca',
     '9sm5xK': 'http://www.google.com'
 };
@@ -26,8 +26,15 @@ app.get('/urls/new', (request, response) => {
 });
 
 app.post('/urls', (request, response) => {
-    console.log(request.body);
-    response.send('OK');
+    let randomString = generateRandomString();
+    urlDatabase[randomString] = request.body['longURL'];
+    response.send(`http://localhost:8080/u/${randomString}`);
+});
+
+app.get('/u/:shortURL', (request, response) => {
+    const longURL = urlDatabase[request.params.shortURL];
+    response.statusCode = 301;
+    response.redirect(longURL);
 });
 
 app.get('/urls/:shortURL', (request, response) => {
@@ -44,6 +51,7 @@ app.get('/hello', (request, response) => {
     let templateVars = {greeting: 'Hello World!'};
     response.render('hello_world', templateVars);
 });
+
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}!`);
 });
@@ -51,11 +59,11 @@ app.listen(PORT, () => {
 function generateRandomString(){
     // return Math.floor((1 + Math.random()) * 0xfffff).toString(16);
     let option = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890qwertyuioplkjhgfdsazxcvbnm';
-    let randomString = '';
+    let string = '';
     for (let i = 0; i < 6; i++){
-        randomString += option[Math.ceil(Math.random() * 62)];
+        string += option[Math.floor(Math.random() * option.length)];
     }
-    return randomString;
+    return string;
 }
 
-generateRandomString();
+console.log(generateRandomString());
