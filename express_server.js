@@ -31,6 +31,12 @@ app.post('/urls', (request, response) => {
     response.send(`http://localhost:8080/u/${randomString}`);
 });
 
+app.post('/urls/:shortURL/delete', (request, response) => {
+    let templateVars = {shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL]}
+    delete urlDatabase[templateVars.shortURL];
+    response.redirect('/urls');
+});
+
 app.get('/u/:shortURL', (request, response) => {
     const longURL = urlDatabase[request.params.shortURL];
     response.statusCode = 301;
