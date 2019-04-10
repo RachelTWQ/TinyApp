@@ -20,7 +20,9 @@ app.get('/', (request, response) => {
 });
 
 app.get('/urls', (request, response) => {
-    let templateVars = {urls: urlDatabase};
+    let templateVars = {username: request.cookies["username"],
+    urls: urlDatabase
+    };
     response.render('urls_index', templateVars);
 });
 
@@ -41,7 +43,11 @@ app.post('/urls', (request, response) => {
 });
 
 app.post('/urls/:shortURL/delete', (request, response) => {
-    let templateVars = {shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL]}
+    let templateVars = {
+        shortURL: request.params.shortURL,
+        longURL: urlDatabase[request.params.shortURL],
+        username: request.cookies["username"]
+    }
     delete urlDatabase[templateVars.shortURL];
     response.redirect('/urls');
 });
@@ -53,7 +59,10 @@ app.get('/u/:shortURL', (request, response) => {
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-    let templateVars = {shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL]}
+    let templateVars = {shortURL: request.params.shortURL,
+        longURL: urlDatabase[request.params.shortURL],
+        username: request.cookies["username"]
+    }
     response.render('urls_show', templateVars);
 });
 
