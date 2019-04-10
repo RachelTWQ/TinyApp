@@ -1,6 +1,6 @@
-let express = require('express');
-let app = express();
-let PORT = 8080;
+const express = require('express');
+const app = express();
+const PORT = 8080;
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
@@ -48,6 +48,13 @@ app.get('/urls/:shortURL', (request, response) => {
     response.render('urls_show', templateVars);
 });
 
+app.post('/urls/:shortURL', (request, response) => {
+    const { shortURL } = request.params;
+    const { longURL } = request.body;
+    urlDatabase[shortURL] = longURL;
+    response.redirect('/urls');
+})
+
 app.get('/urls.json', (request, response) => {
     response.json(urlDatabase);
 });
@@ -71,5 +78,3 @@ function generateRandomString(){
     }
     return string;
 }
-
-console.log(generateRandomString());
