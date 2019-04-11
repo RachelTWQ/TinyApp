@@ -36,7 +36,7 @@ app.get('/', (request, response) => {
 //display the list with edit and delete option
 app.get('/urls', (request, response) => {
     let templateVars = {
-        user: request.cookies["user_id"],
+        user: users[request.cookies["user_id"]]['email'],
         urls: urlDatabase
     };
     response.render('urls_index', templateVars);
@@ -103,18 +103,11 @@ app.post('/login', (request, response) => {
     let user = {};
     user['email'] = request.body.email;
     user['password'] = request.body.password;
-    console.log(request.body);
-    console.log(`users: ${users}\nuser: ${user}`);
-        if (emailMatch (request.body.email) && passwordMatch(request.body.password)){
-            response.statusCode = 200;
-            for (let findUser in users){
-                if(user['email'] === users[findUser]['email']){
-                    user['id'] = users[findUser]['id'];
-                }
-            }
-            console.log(`users: ${users}\nuser: ${user}`);
-            response.cookie("user_id", user['id']);
-            response.redirect('/urls');
+
+    if (emailMatch (request.body.email) && passwordMatch(request.body.password)){
+        response.statusCode = 200;
+        response.cookie("user_id", findIdFromEmail(request.body.email));
+        response.redirect('/urls');
         } else { response.statusCode = 403; }
   
 });
@@ -131,7 +124,7 @@ app.post('/urls/:shortURL/delete', (request, response) => {
     let templateVars = {
         shortURL: request.params.shortURL,
         longURL: urlDatabase[request.params.shortURL],
-        user: request.cookies["user_id"]
+        user: users[request.cookies["user_id"]]['email']
     }
     delete urlDatabase[templateVars.shortURL];
     response.redirect('/urls');
@@ -149,7 +142,7 @@ app.get('/urls/:shortURL', (request, response) => {
     let templateVars = {
         shortURL: request.params.shortURL,
         longURL: urlDatabase[request.params.shortURL],
-        user: request.cookies["user_id"]
+        user: users[request.cookies["user_id"]]['email']
     }
     response.render('urls_show', templateVars);
 });
@@ -202,4 +195,14 @@ function passwordMatch (password) {
         }
     }
     return false;
+}
+
+function findIdFromEmail (email){
+    let IdFound = '';
+    for (let findUser in users){
+        if(email === users[findUser]['email']){
+            IdFound = users[findUser]['id'];
+        }
+    }
+    return IdFound;
 }
