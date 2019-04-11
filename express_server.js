@@ -82,14 +82,20 @@ app.post('/register', (request, response) => {
         email,
         password
     }
+
     // user["id"] = uniqueID;
     // user["email"] = request.body.email;
     // user["password"] = request.body.password;
 
-    users[uniqueID] = user;
+    response.statusCode = emailLookup(email, password);
 
-    response.cookie("user_id", uniqueID);
-    response.redirect('/urls');
+    if (response.statusCode === 200) {
+        users[uniqueID] = user;
+        response.cookie("user_id", uniqueID);
+        response.redirect('/urls');
+    } else {
+        console.log("Ivalid"); //error page later
+    }
 })
 
 //display the shortURL
@@ -157,4 +163,17 @@ function generateRandomString() {
         string += option[Math.floor(Math.random() * option.length)];
     }
     return string;
+}
+
+function emailLookup(email, password) {
+    if (email === '' || password === '') {
+        return 404;
+    } else {
+        for (let user in users) {
+            if (email === users[user]['email']) {
+                return 404;
+            }
+        }
+        return 200;
+    }
 }
