@@ -11,8 +11,10 @@ app.use(cookieParser()); //set cookieParser before you use cookie parser, inside
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-    'b2xVn2': 'http://www.lighthouselabs.ca',
-    '9sm5xK': 'http://www.google.com'
+    'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: "aJ48lW" },
+    '9sm5xK': { longURL: 'http://www.google.com', userID: "aJ48lW" },
+    'b6UTxQ': { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+    'i3BoGr': { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 const users = {
@@ -25,6 +27,11 @@ const users = {
         id: "user2RandomID",
         email: "user2@example.com",
         password: "dishwasher-funk"
+    },
+    "aJ48lW": {
+        id: "aJ48lW",
+        email: "user3@example.com",
+        password: "12345"
     }
 }
 
@@ -35,12 +42,30 @@ app.get('/', (request, response) => {
 
 //display the list with edit and delete option
 app.get('/urls', (request, response) => {
-    let templateVars = {
+    if (request.cookies["user_id"] === undefined){
+        response.redirect('/login')
+    } else {
+        let templateVars = {
         user: users[request.cookies["user_id"]]['email'],
-        urls: urlDatabase
-    };
+        urls: urlsForUser(users[request.cookies["user_id"]]['id']),
+        user_id: users[request.cookies["user_id"]]['id'],
+        };
     response.render('urls_index', templateVars);
+    }
 });
+
+function urlsForUser (ID) {
+    let URLs = [];
+    for (let url in urlDatabase){
+        let URL = {}
+      if (urlDatabase[url]['userID'] === ID){
+        URL["longURL"] = (urlDatabase[url]['longURL']);
+        URL["shortURL"] = url;
+        URLs.push(URL);
+      }
+    }
+    return URLs;
+  }
 
 //logout and clear cookies
 app.post('/logout', (request, response) => {
@@ -50,7 +75,14 @@ app.post('/logout', (request, response) => {
 
 //get a form for entering a new longURL
 app.get('/urls/new', (request, response) => {
-    response.render('urls_new');
+    if (request.cookies["user_id"] === undefined){
+        response.redirect('/login')
+    } else {
+        let templateVars = {
+            user: users[request.cookies["user_id"]]['email']
+        }
+    response.render('urls_new',templateVars);
+    }
 });
 
 //get a form for registeration page
@@ -112,22 +144,33 @@ app.post('/login', (request, response) => {
   
 });
 
-//display the shortURL
+//display the shortURL for redirect
 app.post('/urls', (request, response) => {
+    if (request.cookies["user_id"] === undefined){
+        response.redirect('/login')
+    } else {
     let randomString = generateRandomString();
-    urlDatabase[randomString] = request.body['longURL'];
+    let middleware = {};
+    middleware["longURL"] = request.body['longURL']; //added
+    middleware["userID"] = request.cookies["user_id"]; //added
+    urlDatabase[randomString] = middleware;
     response.send(`http://localhost:8080/u/${randomString}`);
+    }
 });
 
 //delete an existing 
 app.post('/urls/:shortURL/delete', (request, response) => {
+    if (request.cookies["user_id"] === undefined){
+        response.redirect('/login')
+    } else {
     let templateVars = {
         shortURL: request.params.shortURL,
-        longURL: urlDatabase[request.params.shortURL],
+        longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
         user: users[request.cookies["user_id"]]['email']
     }
-    delete urlDatabase[templateVars.shortURL];
+    delete urlDatabase[templateVars.shortURL]; //might not change
     response.redirect('/urls');
+    }
 });
 
 //redirect to the longURL
@@ -139,21 +182,31 @@ app.get('/u/:shortURL', (request, response) => {
 
 //display the URL
 app.get('/urls/:shortURL', (request, response) => {
+    if (request.cookies["user_id"] === undefined){
+        response.redirect('/login')
+    } else {
+        let userID = request.cookies["user_id"];
     let templateVars = {
         shortURL: request.params.shortURL,
-        longURL: urlDatabase[request.params.shortURL],
+        longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
         user: users[request.cookies["user_id"]]['email']
     }
     response.render('urls_show', templateVars);
+    }
 });
 
 //update the URL
 app.post('/urls/:shortURL', (request, response) => {
+    if (request.cookies["user_id"] === undefined){
+        response.redirect('/login')
+    } else {
     const { shortURL } = request.params;
     const { longURL } = request.body;
-    urlDatabase[shortURL] = longURL;
+    urlDatabase[shortURL]['longURL'] = longURL; //changed
+    urlDatabase[shortURL]['userID'] = request.cookies["user_id"]; //added
     response.redirect('/urls');
-})
+    }
+});
 
 app.get('/urls.json', (request, response) => {
     response.json(urlDatabase);
