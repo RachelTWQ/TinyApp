@@ -14,8 +14,8 @@
     
     <h3>My URLs</h3>
     <ul>
-        <% for (let url in urls) { %>
-            <li><%= url %> : <%= urls[url] %></li>
+        <% for (let url of urls) { %>
+            <li><%= url["shortURL"] %> : <%= url["longURL"] %></li>
             <form method="POST" action="/urls/<%= url %>/delete">
                 <a href = "/urls/<%= url %>">Edit</a>
                 <button type = "submit" class = "btn btn-primary">Delete</button>
