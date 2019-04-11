@@ -11,11 +11,11 @@
 <body style="font-size:20px; padding:50px;">
     <!-- EJS code here -->
     <h1>TinyApp</h1>
-    
     <% if(!user){ %>
       <p><a href="/register">Register</a> | <a href="/login">Login</a></p>
     <% } else { %>
       <form method="POST" action="/logout">
+      <a href = '/urls'>URLs</a> | <a href = '/urls/new'>Create New TinyURL</a>
       <span>Logged In As: <%= user %>!</span><button type="submit" class = "btn btn-primary">Logout</button>
     </form>
     <% } %>
