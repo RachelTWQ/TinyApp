@@ -42,17 +42,10 @@ app.get('/urls', (request, response) => {
     response.render('urls_index', templateVars);
 });
 
-//login with username
-app.post('/login', (request, response) => {
-    let user = request.body;
-    response.cookie("user_id", user["user_id"]);
-    response.redirect('/urls');
-});
-
 //logout and clear cookies
 app.post('/logout', (request, response) => {
     response.clearCookie("user_id");
-    response.redirect('/urls');
+    response.redirect('/login');
 });
 
 //get a form for entering a new longURL
@@ -73,9 +66,9 @@ app.post('/register', (request, response) => {
     let uniqueID = generateRandomString();
     const {
         id,
-        email,
-        password
-    } = request.body;
+        email,              // user["id"] = uniqueID;
+        password            // user["email"] = request.body.email;
+    } = request.body;       // user["password"] = request.body.password;
 
     const user = {
         id: uniqueID,
@@ -83,18 +76,18 @@ app.post('/register', (request, response) => {
         password
     };
 
-    // user["id"] = uniqueID;
-    // user["email"] = request.body.email;
-    // user["password"] = request.body.password;
-
-    response.statusCode = emailLookup(email, password);
-
-    if (response.statusCode === 200) {
-        users[uniqueID] = user;
-        response.cookie("user_id", uniqueID);
-        response.redirect('/urls');
+    if (email === '' || password === ''){
+        response.statusCode = 404;
     } else {
-        console.log("Ivalid"); //error page later
+        if (!emailMatch(email)) {
+            response.statusCode = 200;
+            users[uniqueID] = user;
+            response.cookie("user_id", uniqueID);
+            response.redirect('/urls');
+        } else {
+            response.statusCode = 404;
+            console.log("Ivalid"); //error page later
+        }
     }
 })
 
@@ -105,9 +98,27 @@ app.get('/login', (request, response) => {
     response.render('urls_login', templateVars);
 });
 
+//login
 app.post('/login', (request, response) => {
-    response.redirect('/urls');
-})
+    let user = {};
+    user['email'] = request.body.email;
+    user['password'] = request.body.password;
+    console.log(request.body);
+    console.log(`users: ${users}\nuser: ${user}`);
+        if (emailMatch (request.body.email) && passwordMatch(request.body.password)){
+            response.statusCode = 200;
+            for (let findUser in users){
+                if(user['email'] === users[findUser]['email']){
+                    user['id'] = users[findUser]['id'];
+                }
+            }
+            console.log(`users: ${users}\nuser: ${user}`);
+            response.cookie("user_id", user['id']);
+            response.redirect('/urls');
+        } else { response.statusCode = 403; }
+  
+});
+
 //display the shortURL
 app.post('/urls', (request, response) => {
     let randomString = generateRandomString();
@@ -175,15 +186,20 @@ function generateRandomString() {
     return string;
 }
 
-function emailLookup(email, password) {
-    if (email === '' || password === '') {
-        return 404;
-    } else {
-        for (let user in users) {
-            if (email === users[user]['email']) {
-                return 404;
-            }
+function emailMatch (email) {
+   for (let user in users) {
+        if (email === users[user]['email']) {
+            return true;
         }
-        return 200;
     }
+    return false;
+}
+
+function passwordMatch (password) {
+    for (let user in users) {
+        if (password === users[user]['password']){
+            return true;
+        }
+    }
+    return false;
 }
