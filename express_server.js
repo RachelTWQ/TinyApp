@@ -36,7 +36,7 @@ app.get('/', (request, response) => {
 //display the list with edit and delete option
 app.get('/urls', (request, response) => {
     let templateVars = {
-        username: request.cookies["user_id"],
+        user: request.cookies["user_id"],
         urls: urlDatabase
     };
     response.render('urls_index', templateVars);
@@ -44,8 +44,8 @@ app.get('/urls', (request, response) => {
 
 //login with username
 app.post('/login', (request, response) => {
-    let username = request.body;
-    response.cookie("user_id", username["user_id"]);
+    let user = request.body;
+    response.cookie("user_id", user["user_id"]);
     response.redirect('/urls');
 });
 
@@ -63,8 +63,8 @@ app.get('/urls/new', (request, response) => {
 //get a form for registeration page
 app.get('/register', (request, response) => {
     let templateVars = {
-        username: request.cookies["user_id"]
-    }
+        user: request.cookies["user_id"]
+    };
     response.render('urls_register', templateVars);
 });
 
@@ -75,13 +75,13 @@ app.post('/register', (request, response) => {
         id,
         email,
         password
-    } = request.body
+    } = request.body;
 
     const user = {
         id: uniqueID,
         email,
         password
-    }
+    };
 
     // user["id"] = uniqueID;
     // user["email"] = request.body.email;
@@ -98,6 +98,16 @@ app.post('/register', (request, response) => {
     }
 })
 
+app.get('/login', (request, response) => {
+    let templateVars = {
+        user: request.cookies["user_id"]
+    };
+    response.render('urls_login', templateVars);
+});
+
+app.post('/login', (request, response) => {
+    response.redirect('/urls');
+})
 //display the shortURL
 app.post('/urls', (request, response) => {
     let randomString = generateRandomString();
@@ -110,7 +120,7 @@ app.post('/urls/:shortURL/delete', (request, response) => {
     let templateVars = {
         shortURL: request.params.shortURL,
         longURL: urlDatabase[request.params.shortURL],
-        username: request.cookies["user_id"]
+        user: request.cookies["user_id"]
     }
     delete urlDatabase[templateVars.shortURL];
     response.redirect('/urls');
@@ -128,7 +138,7 @@ app.get('/urls/:shortURL', (request, response) => {
     let templateVars = {
         shortURL: request.params.shortURL,
         longURL: urlDatabase[request.params.shortURL],
-        username: request.cookies["user_id"]
+        user: request.cookies["user_id"]
     }
     response.render('urls_show', templateVars);
 });
