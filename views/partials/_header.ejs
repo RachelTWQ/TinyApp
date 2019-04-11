@@ -11,15 +11,12 @@
 <body style="font-size:20px; padding:50px;">
     <!-- EJS code here -->
     <h1>TinyApp</h1>
-    <% if(!username){ %>
-      <p>Username:</p>
-      <form method="POST" action="/login">
-      <input class="form-control" type="text" name="username" style="width: 300px; margin: 1em">
-      <button type="submit" class = "btn btn-primary">Login</button>
-    </form>
+    
+    <% if(!user){ %>
+      <p><a href="/register">Register</a> | <a href="/login">Login</a></p>
     <% } else { %>
       <form method="POST" action="/logout">
-      <span>Logged In As: <%= username %>!</span><button type="submit" class = "btn btn-primary">Logout</button>
+      <span>Logged In As: <%= user %>!</span><button type="submit" class = "btn btn-primary">Logout</button>
     </form>
     <% } %>
 </body>
