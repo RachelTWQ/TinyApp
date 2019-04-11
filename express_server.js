@@ -41,6 +41,13 @@ app.get('/urls/new', (request, response) => {
     response.render('urls_new');
 });
 
+app.get('/register', (request, response) => {
+    let templateVars = {
+        username: request.cookies["username"]
+    }
+    response.render('urls_register', templateVars);
+})
+
 app.post('/urls', (request, response) => {
     let randomString = generateRandomString();
     urlDatabase[randomString] = request.body['longURL'];
