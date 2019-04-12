@@ -14,7 +14,8 @@ const urlDatabase = {
     'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: "aJ48lW" },
     '9sm5xK': { longURL: 'http://www.google.com', userID: "aJ48lW" },
     'b6UTxQ': { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-    'i3BoGr': { longURL: "https://www.google.ca", userID: "aJ48lW" }
+    'i3BoGr': { longURL: "https://www.google.ca", userID: "aJ48lW" },
+    'aaa': { longURL: "https://www.google.ca", userID: "userRandomID" }
 };
 
 const users = {
@@ -30,8 +31,8 @@ const users = {
     },
     "aJ48lW": {
         id: "aJ48lW",
-        email: "user3@example.com",
-        password: "12345"
+        email: "a@a",
+        password: "a"
     }
 }
 
@@ -42,8 +43,9 @@ app.get('/', (request, response) => {
 
 //display the list with edit and delete option
 app.get('/urls', (request, response) => {
-    if (request.cookies["user_id"] === undefined){
-        response.redirect('/login')
+    if (!users[request.cookies["user_id"]]){
+        response.clearCookie("user_id");
+        response.redirect('/login');
     } else {
         let templateVars = {
         user: users[request.cookies["user_id"]]['email'],
@@ -75,7 +77,7 @@ app.post('/logout', (request, response) => {
 
 //get a form for entering a new longURL
 app.get('/urls/new', (request, response) => {
-    if (request.cookies["user_id"] === undefined){
+    if (!users[request.cookies["user_id"]]){
         response.redirect('/login')
     } else {
         let templateVars = {
@@ -132,6 +134,9 @@ app.get('/login', (request, response) => {
 
 //login
 app.post('/login', (request, response) => {
+    if (!users[request.cookies["user_id"]]){
+        response.clearCookie("user_id");
+    } 
     let user = {};
     user['email'] = request.body.email;
     user['password'] = request.body.password;
@@ -146,7 +151,7 @@ app.post('/login', (request, response) => {
 
 //display the shortURL for redirect
 app.post('/urls', (request, response) => {
-    if (request.cookies["user_id"] === undefined){
+    if (!users[request.cookies["user_id"]]){
         response.redirect('/login')
     } else {
     let randomString = generateRandomString();
@@ -154,13 +159,13 @@ app.post('/urls', (request, response) => {
     middleware["longURL"] = request.body['longURL']; //added
     middleware["userID"] = request.cookies["user_id"]; //added
     urlDatabase[randomString] = middleware;
-    response.send(`http://localhost:8080/u/${randomString}`);
+    response.render('urls_generated', {url : `http://localhost:8080/u/${randomString}`});
     }
 });
 
 //delete an existing 
 app.post('/urls/:shortURL/delete', (request, response) => {
-    if (request.cookies["user_id"] === undefined){
+    if (!users[request.cookies["user_id"]]){
         response.redirect('/login')
     } else {
     let templateVars = {
@@ -168,36 +173,43 @@ app.post('/urls/:shortURL/delete', (request, response) => {
         longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
         user: users[request.cookies["user_id"]]['email']
     }
-    delete urlDatabase[templateVars.shortURL]; //might not change
+    //check valid login user
+    if(users[request.cookies["user_id"]].id === urlDatabase[request.params.shortURL]['userID'])
+    {
+        delete urlDatabase[templateVars.shortURL]; //might not change
+    }
     response.redirect('/urls');
     }
 });
 
 //redirect to the longURL
 app.get('/u/:shortURL', (request, response) => {
-    const longURL = urlDatabase[request.params.shortURL];
+    const longURL = urlDatabase[request.params.shortURL]['longURL'];
     response.statusCode = 301;
     response.redirect(longURL);
 });
 
 //display the URL
 app.get('/urls/:shortURL', (request, response) => {
-    if (request.cookies["user_id"] === undefined){
+    if (!users[request.cookies["user_id"]]){
         response.redirect('/login')
-    } else {
-        let userID = request.cookies["user_id"];
-    let templateVars = {
-        shortURL: request.params.shortURL,
-        longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
-        user: users[request.cookies["user_id"]]['email']
+    } else if(users[request.cookies["user_id"]].id == urlDatabase[request.params.shortURL]['userID']){
+        let templateVars = {
+            shortURL: request.params.shortURL,
+            longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
+            user: users[request.cookies["user_id"]]['email']
+        }
+        response.render('urls_show', templateVars);
     }
-    response.render('urls_show', templateVars);
+    else
+    {
+        response.redirect('/urls');
     }
 });
 
 //update the URL
 app.post('/urls/:shortURL', (request, response) => {
-    if (request.cookies["user_id"] === undefined){
+    if (!users[request.cookies["user_id"]]){
         response.redirect('/login')
     } else {
     const { shortURL } = request.params;
