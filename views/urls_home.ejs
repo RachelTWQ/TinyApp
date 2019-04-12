@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  <title>TinyApp</title>
+</head>
+<body style="font-size:20px; padding:50px;">
+    <!-- EJS code here -->
+    <h1>Welcome to Tiny URLs</h1>
+    <% if(!user){ %>
+        <p><a href="/register">Register</a> | <a href="/login">Login</a></p>
+      <% } else { %>
+        <form method="POST" action="/logout">
+        <a href = '/urls'>URLs</a> | <a href = '/urls/new'>Create New TinyURL</a>
+        </br>
+        <span>Logged In As: <%= user %>! </span><button type="submit" class = "btn btn-primary">Logout</button>
+      </form>
+      <% } %>
+</body>
+</html>
