@@ -5,6 +5,10 @@ const PORT = 8080;
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const bcrypt = require('bcrypt');
+const password = "purple-monkey-dinosaur"; // found in the req.params object
+const hashedPassword = bcrypt.hashSync(password, 10);
+
 const cookieParser = require('cookie-parser');
 app.use(cookieParser()); //set cookieParser before you use cookie parser, inside the cookieParser() it is the signature of the cookies
 
@@ -87,7 +91,7 @@ app.get('/urls/new', (request, response) => {
     }
 });
 
-//get a form for registeration page
+//load registration page
 app.get('/register', (request, response) => {
     let templateVars = {
         user: request.cookies["user_id"]
@@ -107,7 +111,7 @@ app.post('/register', (request, response) => {
     const user = {
         id: uniqueID,
         email,
-        password
+        password: bcrypt.hashSync(password, 10)
     };
 
     if (email === '' || password === ''){
@@ -124,7 +128,7 @@ app.post('/register', (request, response) => {
         }
     }
 })
-
+//load login page
 app.get('/login', (request, response) => {
     let templateVars = {
         user: request.cookies["user_id"]
@@ -141,7 +145,7 @@ app.post('/login', (request, response) => {
     user['email'] = request.body.email;
     user['password'] = request.body.password;
 
-    if (emailMatch (request.body.email) && passwordMatch(request.body.password)){
+    if (emailMatch (request.body.email) && bcrypt.compareSync(request.body.password, users[findIdFromEmail(request.body.email)]['password'])){
         response.statusCode = 200;
         response.cookie("user_id", findIdFromEmail(request.body.email));
         response.redirect('/urls');
