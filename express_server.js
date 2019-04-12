@@ -11,7 +11,7 @@ const cookieSession = require('cookie-session');
 app.use(cookieSession({
     name: 'session',
     keys: ['Arashi'],
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 10 * 60 * 60 * 1000
 }));
 
 app.set('view engine', 'ejs');
@@ -44,7 +44,18 @@ const users = {
 
 //home page
 app.get('/', (request, response) => {
-    response.send('Hello');
+    if (!users[request.session["user_id"]]) {
+        request.session = null;
+        response.redirect('/login');
+    } else {
+        let templateVars = {
+            user: users[request.session["user_id"]]['email'],
+            // urls: urlsForUser(users[request.session["user_id"]]['id']),
+            user_id: users[request.session["user_id"]]['id'],
+        };
+        response.render('urls_home', templateVars);
+    }
+    // response.send('Welcome to Tiny URLs');
 });
 
 //display the list with edit and delete option
