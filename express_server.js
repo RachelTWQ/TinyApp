@@ -49,14 +49,15 @@ app.get('/', (request, response) => {
 
 //display the list with edit and delete option
 app.get('/urls', (request, response) => {
-    if (!users[request.cookies["user_id"]]) {
-        response.clearCookie("user_id");
+    if (!users[request.session["user_id"]]) {
+        request.session = null;
+        // response.clearCookie("user_id");
         response.redirect('/login');
     } else {
         let templateVars = {
-            user: users[request.cookies["user_id"]]['email'],
-            urls: urlsForUser(users[request.cookies["user_id"]]['id']),
-            user_id: users[request.cookies["user_id"]]['id'],
+            user: users[request.session["user_id"]]['email'],
+            urls: urlsForUser(users[request.session["user_id"]]['id']),
+            user_id: users[request.session["user_id"]]['id'],
         };
         response.render('urls_index', templateVars);
     }
@@ -77,17 +78,18 @@ function urlsForUser(ID) {
 
 //logout and clear cookies
 app.post('/logout', (request, response) => {
-    response.clearCookie("user_id");
+    request.session = null;
+    // response.clearCookie("user_id");
     response.redirect('/login');
 });
 
 //get a form for entering a new longURL
 app.get('/urls/new', (request, response) => {
-    if (!users[request.cookies["user_id"]]) {
+    if (!users[request.session["user_id"]]) {
         response.redirect('/login')
     } else {
         let templateVars = {
-            user: users[request.cookies["user_id"]]['email']
+            user: users[request.session["user_id"]]['email']
         }
         response.render('urls_new', templateVars);
     }
@@ -96,7 +98,7 @@ app.get('/urls/new', (request, response) => {
 //load registration page
 app.get('/register', (request, response) => {
     let templateVars = {
-        user: request.cookies["user_id"]
+        user: request.session["user_id"]
     };
     response.render('urls_register', templateVars);
 });
@@ -122,7 +124,8 @@ app.post('/register', (request, response) => {
         if (!emailMatch(email)) {
             response.statusCode = 200;
             users[uniqueID] = user;
-            response.cookie("user_id", uniqueID);
+            // response.cookie("user_id", uniqueID);
+            request.session['user_id'] = uniqueID;
             response.redirect('/urls');
         } else {
             response.statusCode = 404;
@@ -133,15 +136,16 @@ app.post('/register', (request, response) => {
 //load login page
 app.get('/login', (request, response) => {
     let templateVars = {
-        user: request.cookies["user_id"]
+        user: request.session["user_id"]
     };
     response.render('urls_login', templateVars);
 });
 
 //login
 app.post('/login', (request, response) => {
-    if (!users[request.cookies["user_id"]]) {
-        response.clearCookie("user_id");
+    if (!users[request.session["user_id"]]) {
+        request.session = null;
+        // response.clearCookie("user_id");
     }
     let user = {};
     user['email'] = request.body.email;
@@ -149,7 +153,8 @@ app.post('/login', (request, response) => {
 
     if (emailMatch(request.body.email) && bcrypt.compareSync(request.body.password, users[findIdFromEmail(request.body.email)]['password'])) {
         response.statusCode = 200;
-        response.cookie("user_id", findIdFromEmail(request.body.email));
+        // response.cookie("user_id", findIdFromEmail(request.body.email));
+        request.session['user_id'] = findIdFromEmail(request.body.email);
         response.redirect('/urls');
     } else { response.statusCode = 403; }
 
@@ -157,13 +162,13 @@ app.post('/login', (request, response) => {
 
 //display the shortURL for redirect
 app.post('/urls', (request, response) => {
-    if (!users[request.cookies["user_id"]]) {
+    if (!users[request.session["user_id"]]) {
         response.redirect('/login')
     } else {
         let randomString = generateRandomString();
         let middleware = {};
         middleware["longURL"] = request.body['longURL']; //added
-        middleware["userID"] = request.cookies["user_id"]; //added
+        middleware["userID"] = request.session["user_id"]; //added
         urlDatabase[randomString] = middleware;
         response.render('urls_generated', { url: `http://localhost:8080/u/${randomString}` });
     }
@@ -171,16 +176,16 @@ app.post('/urls', (request, response) => {
 
 //delete an existing 
 app.post('/urls/:shortURL/delete', (request, response) => {
-    if (!users[request.cookies["user_id"]]) {
+    if (!users[request.session["user_id"]]) {
         response.redirect('/login')
     } else {
         let templateVars = {
             shortURL: request.params.shortURL,
             longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
-            user: users[request.cookies["user_id"]]['email']
+            user: users[request.session["user_id"]]['email']
         }
         //check valid login user
-        if (users[request.cookies["user_id"]].id === urlDatabase[request.params.shortURL]['userID']) {
+        if (users[request.session["user_id"]].id === urlDatabase[request.params.shortURL]['userID']) {
             delete urlDatabase[templateVars.shortURL]; //might not change
         }
         response.redirect('/urls');
@@ -196,13 +201,13 @@ app.get('/u/:shortURL', (request, response) => {
 
 //display the URL
 app.get('/urls/:shortURL', (request, response) => {
-    if (!users[request.cookies["user_id"]]) {
+    if (!users[request.session["user_id"]]) {
         response.redirect('/login')
-    } else if (users[request.cookies["user_id"]].id == urlDatabase[request.params.shortURL]['userID']) {
+    } else if (users[request.session["user_id"]].id == urlDatabase[request.params.shortURL]['userID']) {
         let templateVars = {
             shortURL: request.params.shortURL,
             longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
-            user: users[request.cookies["user_id"]]['email']
+            user: users[request.session["user_id"]]['email']
         }
         response.render('urls_show', templateVars);
     }
@@ -213,13 +218,13 @@ app.get('/urls/:shortURL', (request, response) => {
 
 //update the URL
 app.post('/urls/:shortURL', (request, response) => {
-    if (!users[request.cookies["user_id"]]) {
+    if (!users[request.session["user_id"]]) {
         response.redirect('/login')
     } else {
         const { shortURL } = request.params;
         const { longURL } = request.body;
         urlDatabase[shortURL]['longURL'] = longURL; //changed
-        urlDatabase[shortURL]['userID'] = request.cookies["user_id"]; //added
+        urlDatabase[shortURL]['userID'] = request.session["user_id"]; //added
         response.redirect('/urls');
     }
 });
@@ -228,11 +233,11 @@ app.get('/urls.json', (request, response) => {
     response.json(urlDatabase);
 });
 
-app.get('/hello', (request, response) => {
-    // response.send('<html><body>Hello <b>World</b></body></html>\n');
-    let templateVars = { greeting: 'Hello World!' };
-    response.render('hello_world', templateVars);
-});
+// app.get('/hello', (request, response) => {
+//     // response.send('<html><body>Hello <b>World</b></body></html>\n');
+//     let templateVars = { greeting: 'Hello World!' };
+//     response.render('hello_world', templateVars);
+// });
 
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}!`);
