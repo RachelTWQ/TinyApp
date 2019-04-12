@@ -6,11 +6,13 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const bcrypt = require('bcrypt');
-const password = "purple-monkey-dinosaur"; // found in the req.params object
-const hashedPassword = bcrypt.hashSync(password, 10);
 
-const cookieParser = require('cookie-parser');
-app.use(cookieParser()); //set cookieParser before you use cookie parser, inside the cookieParser() it is the signature of the cookies
+const cookieSession = require('cookie-session');
+app.use(cookieSession({
+    name: 'session',
+    keys: ['Arashi'],
+    maxAge: 24 * 60 * 60 * 1000
+}));
 
 app.set('view engine', 'ejs');
 
@@ -47,31 +49,31 @@ app.get('/', (request, response) => {
 
 //display the list with edit and delete option
 app.get('/urls', (request, response) => {
-    if (!users[request.cookies["user_id"]]){
+    if (!users[request.cookies["user_id"]]) {
         response.clearCookie("user_id");
         response.redirect('/login');
     } else {
         let templateVars = {
-        user: users[request.cookies["user_id"]]['email'],
-        urls: urlsForUser(users[request.cookies["user_id"]]['id']),
-        user_id: users[request.cookies["user_id"]]['id'],
+            user: users[request.cookies["user_id"]]['email'],
+            urls: urlsForUser(users[request.cookies["user_id"]]['id']),
+            user_id: users[request.cookies["user_id"]]['id'],
         };
-    response.render('urls_index', templateVars);
+        response.render('urls_index', templateVars);
     }
 });
 
-function urlsForUser (ID) {
+function urlsForUser(ID) {
     let URLs = [];
-    for (let url in urlDatabase){
+    for (let url in urlDatabase) {
         let URL = {}
-      if (urlDatabase[url]['userID'] === ID){
-        URL["longURL"] = (urlDatabase[url]['longURL']);
-        URL["shortURL"] = url;
-        URLs.push(URL);
-      }
+        if (urlDatabase[url]['userID'] === ID) {
+            URL["longURL"] = (urlDatabase[url]['longURL']);
+            URL["shortURL"] = url;
+            URLs.push(URL);
+        }
     }
     return URLs;
-  }
+}
 
 //logout and clear cookies
 app.post('/logout', (request, response) => {
@@ -81,13 +83,13 @@ app.post('/logout', (request, response) => {
 
 //get a form for entering a new longURL
 app.get('/urls/new', (request, response) => {
-    if (!users[request.cookies["user_id"]]){
+    if (!users[request.cookies["user_id"]]) {
         response.redirect('/login')
     } else {
         let templateVars = {
             user: users[request.cookies["user_id"]]['email']
         }
-    response.render('urls_new',templateVars);
+        response.render('urls_new', templateVars);
     }
 });
 
@@ -114,7 +116,7 @@ app.post('/register', (request, response) => {
         password: bcrypt.hashSync(password, 10)
     };
 
-    if (email === '' || password === ''){
+    if (email === '' || password === '') {
         response.statusCode = 404;
     } else {
         if (!emailMatch(email)) {
@@ -124,7 +126,7 @@ app.post('/register', (request, response) => {
             response.redirect('/urls');
         } else {
             response.statusCode = 404;
-            console.log("Ivalid"); //error page later
+            console.log("Invalid"); //error page later
         }
     }
 })
@@ -138,51 +140,50 @@ app.get('/login', (request, response) => {
 
 //login
 app.post('/login', (request, response) => {
-    if (!users[request.cookies["user_id"]]){
+    if (!users[request.cookies["user_id"]]) {
         response.clearCookie("user_id");
-    } 
+    }
     let user = {};
     user['email'] = request.body.email;
     user['password'] = request.body.password;
 
-    if (emailMatch (request.body.email) && bcrypt.compareSync(request.body.password, users[findIdFromEmail(request.body.email)]['password'])){
+    if (emailMatch(request.body.email) && bcrypt.compareSync(request.body.password, users[findIdFromEmail(request.body.email)]['password'])) {
         response.statusCode = 200;
         response.cookie("user_id", findIdFromEmail(request.body.email));
         response.redirect('/urls');
-        } else { response.statusCode = 403; }
-  
+    } else { response.statusCode = 403; }
+
 });
 
 //display the shortURL for redirect
 app.post('/urls', (request, response) => {
-    if (!users[request.cookies["user_id"]]){
+    if (!users[request.cookies["user_id"]]) {
         response.redirect('/login')
     } else {
-    let randomString = generateRandomString();
-    let middleware = {};
-    middleware["longURL"] = request.body['longURL']; //added
-    middleware["userID"] = request.cookies["user_id"]; //added
-    urlDatabase[randomString] = middleware;
-    response.render('urls_generated', {url : `http://localhost:8080/u/${randomString}`});
+        let randomString = generateRandomString();
+        let middleware = {};
+        middleware["longURL"] = request.body['longURL']; //added
+        middleware["userID"] = request.cookies["user_id"]; //added
+        urlDatabase[randomString] = middleware;
+        response.render('urls_generated', { url: `http://localhost:8080/u/${randomString}` });
     }
 });
 
 //delete an existing 
 app.post('/urls/:shortURL/delete', (request, response) => {
-    if (!users[request.cookies["user_id"]]){
+    if (!users[request.cookies["user_id"]]) {
         response.redirect('/login')
     } else {
-    let templateVars = {
-        shortURL: request.params.shortURL,
-        longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
-        user: users[request.cookies["user_id"]]['email']
-    }
-    //check valid login user
-    if(users[request.cookies["user_id"]].id === urlDatabase[request.params.shortURL]['userID'])
-    {
-        delete urlDatabase[templateVars.shortURL]; //might not change
-    }
-    response.redirect('/urls');
+        let templateVars = {
+            shortURL: request.params.shortURL,
+            longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
+            user: users[request.cookies["user_id"]]['email']
+        }
+        //check valid login user
+        if (users[request.cookies["user_id"]].id === urlDatabase[request.params.shortURL]['userID']) {
+            delete urlDatabase[templateVars.shortURL]; //might not change
+        }
+        response.redirect('/urls');
     }
 });
 
@@ -195,9 +196,9 @@ app.get('/u/:shortURL', (request, response) => {
 
 //display the URL
 app.get('/urls/:shortURL', (request, response) => {
-    if (!users[request.cookies["user_id"]]){
+    if (!users[request.cookies["user_id"]]) {
         response.redirect('/login')
-    } else if(users[request.cookies["user_id"]].id == urlDatabase[request.params.shortURL]['userID']){
+    } else if (users[request.cookies["user_id"]].id == urlDatabase[request.params.shortURL]['userID']) {
         let templateVars = {
             shortURL: request.params.shortURL,
             longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
@@ -205,22 +206,21 @@ app.get('/urls/:shortURL', (request, response) => {
         }
         response.render('urls_show', templateVars);
     }
-    else
-    {
+    else {
         response.redirect('/urls');
     }
 });
 
 //update the URL
 app.post('/urls/:shortURL', (request, response) => {
-    if (!users[request.cookies["user_id"]]){
+    if (!users[request.cookies["user_id"]]) {
         response.redirect('/login')
     } else {
-    const { shortURL } = request.params;
-    const { longURL } = request.body;
-    urlDatabase[shortURL]['longURL'] = longURL; //changed
-    urlDatabase[shortURL]['userID'] = request.cookies["user_id"]; //added
-    response.redirect('/urls');
+        const { shortURL } = request.params;
+        const { longURL } = request.body;
+        urlDatabase[shortURL]['longURL'] = longURL; //changed
+        urlDatabase[shortURL]['userID'] = request.cookies["user_id"]; //added
+        response.redirect('/urls');
     }
 });
 
@@ -248,8 +248,8 @@ function generateRandomString() {
     return string;
 }
 
-function emailMatch (email) {
-   for (let user in users) {
+function emailMatch(email) {
+    for (let user in users) {
         if (email === users[user]['email']) {
             return true;
         }
@@ -257,19 +257,20 @@ function emailMatch (email) {
     return false;
 }
 
-function passwordMatch (password) {
-    for (let user in users) {
-        if (password === users[user]['password']){
-            return true;
-        }
-    }
-    return false;
-}
+//not needed
+// function passwordMatch (password) {
+//     for (let user in users) {
+//         if (password === users[user]['password']){
+//             return true;
+//         }
+//     }
+//     return false;
+// }
 
-function findIdFromEmail (email){
+function findIdFromEmail(email) {
     let IdFound = '';
-    for (let findUser in users){
-        if(email === users[findUser]['email']){
+    for (let findUser in users) {
+        if (email === users[findUser]['email']) {
             IdFound = users[findUser]['id'];
         }
     }
