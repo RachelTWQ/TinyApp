@@ -159,7 +159,7 @@ app.post('/urls', (request, response) => {
     middleware["longURL"] = request.body['longURL']; //added
     middleware["userID"] = request.cookies["user_id"]; //added
     urlDatabase[randomString] = middleware;
-    response.send(`http://localhost:8080/u/${randomString}`);
+    response.render('urls_generated', {url : `http://localhost:8080/u/${randomString}`});
     }
 });
 
@@ -184,7 +184,7 @@ app.post('/urls/:shortURL/delete', (request, response) => {
 
 //redirect to the longURL
 app.get('/u/:shortURL', (request, response) => {
-    const longURL = urlDatabase[request.params.shortURL];
+    const longURL = urlDatabase[request.params.shortURL]['longURL'];
     response.statusCode = 301;
     response.redirect(longURL);
 });
