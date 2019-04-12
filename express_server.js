@@ -61,7 +61,7 @@ app.get('/', (request, response) => {
     // response.send('Welcome to Tiny URLs');
 });
 
-//display the list with edit and delete option
+//display the URLs
 app.get('/urls', (request, response) => {
     if (!users[request.session["user_id"]]) {
         request.session = null;
@@ -189,7 +189,7 @@ app.post('/urls', (request, response) => {
 });
 
 //delete an existing 
-app.post('/urls/:shortURL/delete', (request, response) => {  //method-override
+app.delete('/urls/:shortURL/delete', (request, response) => {  //method-override
     if (!users[request.session["user_id"]]) {
         response.redirect('/login')
     } else {
