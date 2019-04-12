@@ -11,7 +11,7 @@ const cookieSession = require('cookie-session');
 app.use(cookieSession({
     name: 'session',
     keys: ['Arashi'],
-    maxAge: 10 * 60 * 60 * 1000
+    maxAge: 10 * 60 * 1000
 }));
 
 const methodOverride = require('method-override');
@@ -47,31 +47,23 @@ const users = {
 
 //home page
 app.get('/', (request, response) => {
-    if (!users[request.session["user_id"]]) {
-        request.session = null;
+    if (!users[request.session['user_id']]) {
         response.redirect('/login');
     } else {
-        let templateVars = {
-            user: users[request.session["user_id"]]['email'],
-            // urls: urlsForUser(users[request.session["user_id"]]['id']),
-            user_id: users[request.session["user_id"]]['id'],
-        };
-        response.render('urls_home', templateVars);
+        response.redirect('/urls');
     }
-    // response.send('Welcome to Tiny URLs');
 });
 
 //display the URLs
 app.get('/urls', (request, response) => {
-    if (!users[request.session["user_id"]]) {
+    if (!users[request.session['user_id']]) {
         request.session = null;
-        // response.clearCookie("user_id");
         response.redirect('/login');
     } else {
         let templateVars = {
-            user: users[request.session["user_id"]]['email'],
-            urls: urlsForUser(users[request.session["user_id"]]['id']),
-            user_id: users[request.session["user_id"]]['id'],
+            user: users[request.session['user_id']]['email'],
+            urls: urlsForUser(users[request.session['user_id']]['id']),
+            user_id: users[request.session['user_id']]['id'],
         };
         response.render('urls_index', templateVars);
     }
@@ -92,18 +84,17 @@ function urlsForUser(ID) {
 
 //logout and clear cookies
 app.post('/logout', (request, response) => {
-    request.session = null;
-    // response.clearCookie("user_id");
+    request.session['user_id'] = null;
     response.redirect('/login');
 });
 
 //get a form for entering a new longURL
 app.get('/urls/new', (request, response) => {
-    if (!users[request.session["user_id"]]) {
+    if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
         let templateVars = {
-            user: users[request.session["user_id"]]['email']
+            user: users[request.session['user_id']]['email']
         }
         response.render('urls_new', templateVars);
     }
@@ -112,7 +103,7 @@ app.get('/urls/new', (request, response) => {
 //load registration page
 app.get('/register', (request, response) => {
     let templateVars = {
-        user: request.session["user_id"]
+        user: request.session['user_id']
     };
     response.render('urls_register', templateVars);
 });
@@ -122,9 +113,9 @@ app.post('/register', (request, response) => {
     let uniqueID = generateRandomString();
     const {
         id,
-        email,              // user["id"] = uniqueID;
-        password            // user["email"] = request.body.email;
-    } = request.body;       // user["password"] = request.body.password;
+        email,
+        password
+    } = request.body;
 
     const user = {
         id: uniqueID,
@@ -134,73 +125,77 @@ app.post('/register', (request, response) => {
 
     if (email === '' || password === '') {
         response.statusCode = 404;
+        response.render('urls_empty');
     } else {
         if (!emailMatch(email)) {
             response.statusCode = 200;
             users[uniqueID] = user;
-            // response.cookie("user_id", uniqueID);
             request.session['user_id'] = uniqueID;
             response.redirect('/urls');
         } else {
             response.statusCode = 404;
-            console.log("Invalid"); //error page later
+            response.render('urls_error');
         }
     }
-})
+});
+
 //load login page
 app.get('/login', (request, response) => {
+    if(!users[request.session['user_id']]){
+        request.session['user_id'] = null
+    }
     let templateVars = {
-        user: request.session["user_id"]
+        user: request.session['user_id']
     };
     response.render('urls_login', templateVars);
 });
 
 //login
 app.post('/login', (request, response) => {
-    if (!users[request.session["user_id"]]) {
-        request.session = null;
-        // response.clearCookie("user_id");
-    }
+    
     let user = {};
     user['email'] = request.body.email;
     user['password'] = request.body.password;
 
     if (emailMatch(request.body.email) && bcrypt.compareSync(request.body.password, users[findIdFromEmail(request.body.email)]['password'])) {
+        
         response.statusCode = 200;
-        // response.cookie("user_id", findIdFromEmail(request.body.email));
         request.session['user_id'] = findIdFromEmail(request.body.email);
         response.redirect('/urls');
-    } else { response.statusCode = 403; }
+    } else { 
+        response.statusCode = 403;
+        response.render('urls_error');
+    }
 
 });
 
 //display the shortURL for redirect
 app.post('/urls', (request, response) => {
-    if (!users[request.session["user_id"]]) {
+    if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
         let randomString = generateRandomString();
         let middleware = {};
-        middleware["longURL"] = request.body['longURL']; //added
-        middleware["userID"] = request.session["user_id"]; //added
+        middleware["longURL"] = request.body['longURL'];
+        middleware["userID"] = request.session['user_id'];
         urlDatabase[randomString] = middleware;
         response.render('urls_generated', { url: `http://localhost:8080/u/${randomString}` });
     }
 });
 
 //delete an existing 
-app.delete('/urls/:shortURL/delete', (request, response) => {  //method-override
-    if (!users[request.session["user_id"]]) {
+app.post('/urls/:shortURL/delete', (request, response) => {  //method-override
+    if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
         let templateVars = {
             shortURL: request.params.shortURL,
-            longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
-            user: users[request.session["user_id"]]['email']
+            longURL: urlDatabase[request.params.shortURL]['longURL'], 
+            user: users[request.session['user_id']]['email']
         }
         //check valid login user
-        if (users[request.session["user_id"]].id === urlDatabase[request.params.shortURL]['userID']) {
-            delete urlDatabase[templateVars.shortURL]; //might not change
+        if (users[request.session['user_id']].id === urlDatabase[request.params.shortURL]['userID']) {
+            delete urlDatabase[templateVars.shortURL]; 
         }
         response.redirect('/urls');
     }
@@ -215,13 +210,13 @@ app.get('/u/:shortURL', (request, response) => {
 
 //display the URL
 app.get('/urls/:shortURL', (request, response) => {
-    if (!users[request.session["user_id"]]) {
+    if (!users[request.session['user_id']]) {
         response.redirect('/login')
-    } else if (users[request.session["user_id"]].id == urlDatabase[request.params.shortURL]['userID']) {
+    } else if (users[request.session['user_id']].id == urlDatabase[request.params.shortURL]['userID']) {
         let templateVars = {
             shortURL: request.params.shortURL,
             longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
-            user: users[request.session["user_id"]]['email']
+            user: users[request.session['user_id']]['email']
         }
         response.render('urls_show', templateVars);
     }
@@ -231,14 +226,14 @@ app.get('/urls/:shortURL', (request, response) => {
 });
 
 //update the URL
-app.put('/urls/:shortURL', (request, response) => {  //method-overrided
-    if (!users[request.session["user_id"]]) {
+app.post('/urls/:shortURL', (request, response) => {  //method-overrided
+    if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
         const { shortURL } = request.params;
         const { longURL } = request.body;
         urlDatabase[shortURL]['longURL'] = longURL; //changed
-        urlDatabase[shortURL]['userID'] = request.session["user_id"]; //added
+        urlDatabase[shortURL]['userID'] = request.session['user_id']; //added
         response.redirect('/urls');
     }
 });
