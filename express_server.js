@@ -14,6 +14,9 @@ app.use(cookieSession({
     maxAge: 10 * 60 * 60 * 1000
 }));
 
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'));
+
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
@@ -186,7 +189,7 @@ app.post('/urls', (request, response) => {
 });
 
 //delete an existing 
-app.post('/urls/:shortURL/delete', (request, response) => {
+app.post('/urls/:shortURL/delete', (request, response) => {  //method-override
     if (!users[request.session["user_id"]]) {
         response.redirect('/login')
     } else {
@@ -228,7 +231,7 @@ app.get('/urls/:shortURL', (request, response) => {
 });
 
 //update the URL
-app.post('/urls/:shortURL', (request, response) => {
+app.put('/urls/:shortURL', (request, response) => {  //method-overrided
     if (!users[request.session["user_id"]]) {
         response.redirect('/login')
     } else {
