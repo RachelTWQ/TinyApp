@@ -171,7 +171,7 @@ app.post('/urls', (request, response) => {
 });
 
 //delete an existing 
-app.post('/urls/:shortURL/delete', (request, response) => {
+app.delete('/urls/:shortURL/delete', (request, response) => {
     if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
@@ -213,7 +213,7 @@ app.get('/urls/:shortURL', (request, response) => {
 });
 
 //update the URL
-app.post('/urls/:shortURL', (request, response) => {
+app.put('/urls/:shortURL', (request, response) => {
     if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
