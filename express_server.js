@@ -19,29 +19,30 @@ app.use(methodOverride('_method'));
 
 app.set('view engine', 'ejs');
 
+//database with default test data
 const urlDatabase = {
-    'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: "aJ48lW" },
-    '9sm5xK': { longURL: 'http://www.google.com', userID: "aJ48lW" },
-    'b6UTxQ': { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-    'i3BoGr': { longURL: "https://www.google.ca", userID: "aJ48lW" },
-    'aaa': { longURL: "https://www.google.ca", userID: "userRandomID" }
+    'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'aJ48lW' },
+    '9sm5xK': { longURL: 'http://www.google.com', userID: 'aJ48lW' },
+    'b6UTxQ': { longURL: 'https://www.tsn.ca', userID: 'aJ48lW' },
+    'i3BoGr': { longURL: 'https://www.google.ca', userID: 'aJ48lW' },
+    'aaa': { longURL: 'https://www.google.ca', userID: 'userRandomID' }
 };
 
 const users = {
-    "userRandomID": {
-        id: "userRandomID",
-        email: "user@example.com",
-        password: "purple-monkey-dinosaur"
+    'userRandomID': {
+        id: 'userRandomID',
+        email: 'user@example.com',
+        password: 'purple-monkey-dinosaur'
     },
-    "user2RandomID": {
-        id: "user2RandomID",
-        email: "user2@example.com",
-        password: "dishwasher-funk"
+    'user2RandomID': {
+        id: 'user2RandomID',
+        email: 'user2@example.com',
+        password: 'dishwasher-funk'
     },
-    "aJ48lW": {
-        id: "aJ48lW",
-        email: "a@a",
-        password: "a"
+    'aJ48lW': {
+        id: 'aJ48lW',
+        email: 'a@a',
+        password: 'a'
     }
 }
 
@@ -68,19 +69,6 @@ app.get('/urls', (request, response) => {
         response.render('urls_index', templateVars);
     }
 });
-
-function urlsForUser(ID) {
-    let URLs = [];
-    for (let url in urlDatabase) {
-        let URL = {}
-        if (urlDatabase[url]['userID'] === ID) {
-            URL["longURL"] = (urlDatabase[url]['longURL']);
-            URL["shortURL"] = url;
-            URLs.push(URL);
-        }
-    }
-    return URLs;
-}
 
 //logout and clear cookies
 app.post('/logout', (request, response) => {
@@ -158,7 +146,6 @@ app.post('/login', (request, response) => {
     user['password'] = request.body.password;
 
     if (emailMatch(request.body.email) && bcrypt.compareSync(request.body.password, users[findIdFromEmail(request.body.email)]['password'])) {
-        
         response.statusCode = 200;
         request.session['user_id'] = findIdFromEmail(request.body.email);
         response.redirect('/urls');
@@ -176,15 +163,15 @@ app.post('/urls', (request, response) => {
     } else {
         let randomString = generateRandomString();
         let middleware = {};
-        middleware["longURL"] = request.body['longURL'];
-        middleware["userID"] = request.session['user_id'];
+        middleware['longURL'] = request.body['longURL'];
+        middleware['userID'] = request.session['user_id'];
         urlDatabase[randomString] = middleware;
         response.render('urls_generated', { url: `http://localhost:8080/u/${randomString}` });
     }
 });
 
 //delete an existing 
-app.post('/urls/:shortURL/delete', (request, response) => {  //method-override
+app.post('/urls/:shortURL/delete', (request, response) => {
     if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
@@ -215,7 +202,7 @@ app.get('/urls/:shortURL', (request, response) => {
     } else if (users[request.session['user_id']].id == urlDatabase[request.params.shortURL]['userID']) {
         let templateVars = {
             shortURL: request.params.shortURL,
-            longURL: urlDatabase[request.params.shortURL]['longURL'], //changed
+            longURL: urlDatabase[request.params.shortURL]['longURL'],
             user: users[request.session['user_id']]['email']
         }
         response.render('urls_show', templateVars);
@@ -226,14 +213,14 @@ app.get('/urls/:shortURL', (request, response) => {
 });
 
 //update the URL
-app.post('/urls/:shortURL', (request, response) => {  //method-overrided
+app.post('/urls/:shortURL', (request, response) => {
     if (!users[request.session['user_id']]) {
         response.redirect('/login')
     } else {
         const { shortURL } = request.params;
         const { longURL } = request.body;
-        urlDatabase[shortURL]['longURL'] = longURL; //changed
-        urlDatabase[shortURL]['userID'] = request.session['user_id']; //added
+        urlDatabase[shortURL]['longURL'] = longURL;
+        urlDatabase[shortURL]['userID'] = request.session['user_id'];
         response.redirect('/urls');
     }
 });
@@ -242,18 +229,11 @@ app.get('/urls.json', (request, response) => {
     response.json(urlDatabase);
 });
 
-// app.get('/hello', (request, response) => {
-//     // response.send('<html><body>Hello <b>World</b></body></html>\n');
-//     let templateVars = { greeting: 'Hello World!' };
-//     response.render('hello_world', templateVars);
-// });
-
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}!`);
 });
 
 function generateRandomString() {
-    // return Math.floor((1 + Math.random()) * 0xfffff).toString(16);
     let option = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890qwertyuioplkjhgfdsazxcvbnm';
     let string = '';
     for (let i = 0; i < 6; i++) {
@@ -271,16 +251,6 @@ function emailMatch(email) {
     return false;
 }
 
-//not needed
-// function passwordMatch (password) {
-//     for (let user in users) {
-//         if (password === users[user]['password']){
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
 function findIdFromEmail(email) {
     let IdFound = '';
     for (let findUser in users) {
@@ -289,4 +259,17 @@ function findIdFromEmail(email) {
         }
     }
     return IdFound;
+}
+
+function urlsForUser(ID) {
+    let URLs = [];
+    for (let url in urlDatabase) {
+        let URL = {}
+        if (urlDatabase[url]['userID'] === ID) {
+            URL['longURL'] = (urlDatabase[url]['longURL']);
+            URL['shortURL'] = url;
+            URLs.push(URL);
+        }
+    }
+    return URLs;
 }
